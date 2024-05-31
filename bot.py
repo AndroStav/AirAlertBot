@@ -19,17 +19,14 @@ async def main():
             alert_status = await alerts_client.get_air_raid_alert_status(31)
             status_text = alert_status.status
 
-            if "no_alert" in status_text:
-                if lastmess == 1:
-                    message = "🟢 Відбій повітряної тривоги 🟢"
-                    lastmess = 0
-                    await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
-            else:
-                if "active" in status_text:
-                    if lastmess == 0:
-                        message = "🔴 Увага! Повітряна тривога! 🔴"
-                        lastmess = 1
-                        await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
+            if "no_alert" in status_text and lastmess == 1:
+                message = "🟢 Відбій повітряної тривоги 🟢"
+                await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
+                lastmess = 0
+            elif "active" in status_text and lastmess == 0:
+                message = "🔴 Увага! Повітряна тривога! 🔴"
+                await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
+                lastmess = 1
             await asyncio.sleep(60)
 
         except:
