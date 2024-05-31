@@ -3,7 +3,7 @@ import math
 from alerts_in_ua import AsyncClient as AsyncAlertsClient
 import telegram
 
-ALERTSTOKEN = "Alerts_in_ua_token"  #Токен alerts.ia.ua api
+ALERTSTOKEN = "Alerts_in_ua_token"  #Токен alerts.in.ua api
 TGTOKEN = "Telegram_bot_token"      #Токен телеграм бота
 CHAT_ID = "Group_chat_id"           #ID групи
 THREAD_ID = "Group_thread_id"       #ID гілки в групі
