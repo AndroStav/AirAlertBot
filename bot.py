@@ -4,6 +4,7 @@ from alerts_in_ua import AsyncClient as AsyncAlertsClient
 import telegram
 import subprocess
 import json
+from datetime import datetime
 import logging
 
 ALERTSTOKEN = "Alerts_in_ua_token"  #Токен alerts.in.ua api
@@ -37,6 +38,9 @@ async def eppo():
             for notification in notifications:
                 if target in notification['content']:
                     messtime = notification['when']
+
+                    if isinstance(messtime, str):
+                        messtime = int(datetime.strptime(messtime, "%Y-%m-%d %H:%M:%S").timestamp() * 1000)
 
                     if messtime > lasteppo:
                         logging.info("Загроза наближається!")
