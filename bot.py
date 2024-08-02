@@ -1,6 +1,7 @@
 import asyncio
 import math
 from alerts_in_ua import AsyncClient as AsyncAlertsClient
+from telegram.request import HTTPXRequest
 import telegram
 import subprocess
 import json
@@ -14,9 +15,32 @@ THREAD_ID = "Group_thread_id"       #ID гілки в групі
 lastmess = 0
 lasteppo = 0
 
-bot = telegram.Bot(TGTOKEN)
+trequest = HTTPXRequest(connection_pool_size=20)
+bot = telegram.Bot(TGTOKEN, request=trequest)
 
 logging.basicConfig(level=logging.DEBUG, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
+
+async def sendmess(message):
+    while True:
+        try:
+            await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
+            logging.info("Повідомлення надіслано")
+            return
+        
+        except telegram.error.TelegramError as e:
+            logging.error(e)
+            logging.debug("Засинаю після помилки Telegram")
+            await asyncio.sleep(15)
+
+        except asyncio.CancelledError as e:
+            logging.error(e)
+            logging.debug("Засинаю після помилки CancelledError")
+            await asyncio.sleep(15)
+
+        except Exception as e:
+            logging.error(e)
+            logging.debug("Засинаю після помилки")
+            await asyncio.sleep(15)
 
 async def eppo():
     global lastmess
@@ -46,17 +70,13 @@ async def eppo():
                         logging.info("Загроза наближається!")
 
                         message = "❗️ Повітряна загроза рухається у нашому напрямку! ❗️"
-                        await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
+                        await sendmess(message)
                         
                         logging.info("Повідомлення надіслано")
                         lasteppo = messtime
+                        logging.debug(f"lasteppo == {lasteppo}")
 
             logging.debug("Засинаю")
-            await asyncio.sleep(15)
-
-        except telegram.error.TelegramError as e:
-            logging.error(e)
-            logging.debug("Засинаю після помилки Telegram")
             await asyncio.sleep(15)
 
         except asyncio.CancelledError as e:
@@ -86,8 +106,7 @@ async def main():
                 if lastmess == 1:
                     logging.info("Відбій")
                     message = "🟢 Відбій повітряної тривоги 🟢"
-                    await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
-                    logging.info("Повідомлення надіслано")
+                    await sendmess(message)
                     lastmess = 0
                     logging.debug(f"lastmess == {lastmess}")
             else:
@@ -95,8 +114,7 @@ async def main():
                     if lastmess == 0:
                         logging.info("Тривога")
                         message = "🔴 Увага! Повітряна тривога! 🔴"
-                        await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
-                        logging.info("Повідомлення надіслано")
+                        await sendmess(message)
                         lastmess = 1
                         logging.debug(f"lastmess == {lastmess}")
 
@@ -105,11 +123,6 @@ async def main():
 
             logging.debug("Засинаю")
             await asyncio.sleep(60)
-
-        except telegram.error.TelegramError as e:
-            logging.error(e)
-            logging.debug("Засинаю після помилки Telegram")
-            await asyncio.sleep(15)
 
         except asyncio.CancelledError as e:
             logging.error(e)
