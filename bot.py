@@ -15,7 +15,7 @@ THREAD_ID = "Group_thread_id"       #ID гілки в групі
 lastmess = 0
 lasteppo = 0
 
-trequest = HTTPXRequest(connection_pool_size=20)
+trequest = HTTPXRequest(connection_pool_size=20, pool_timeout=60)
 bot = telegram.Bot(TGTOKEN, request=trequest)
 
 logging.basicConfig(level=logging.DEBUG, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
