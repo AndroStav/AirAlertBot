@@ -20,10 +20,10 @@ bot = telegram.Bot(TGTOKEN, request=trequest)
 
 logging.basicConfig(level=logging.DEBUG, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
 
-async def sendmess(message):
+async def sendmess(message, photo):
     while True:
         try:
-            await bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=THREAD_ID, read_timeout=60, write_timeout=60, connect_timeout=60)
+            await bot.send_photo(chat_id=CHAT_ID, message_thread_id=THREAD_ID, photo=photo, caption=message, read_timeout=60, write_timeout=60, connect_timeout=60)
             logging.info("Повідомлення надіслано")
             return
         
@@ -70,9 +70,9 @@ async def eppo():
                         logging.info("Загроза наближається!")
 
                         message = "❗️ Повітряна загроза рухається у нашому напрямку! ❗️"
-                        await sendmess(message)
+                        photo = "danger.jpeg"
+                        await sendmess(message, photo)
                         
-                        logging.info("Повідомлення надіслано")
                         lasteppo = messtime
                         logging.debug(f"lasteppo == {lasteppo}")
 
@@ -106,7 +106,8 @@ async def main():
                 if lastmess == 1:
                     logging.info("Відбій")
                     message = "🟢 Відбій повітряної тривоги 🟢"
-                    await sendmess(message)
+                    photo = "clear.jpg"
+                    await sendmess(message, photo)
                     lastmess = 0
                     logging.debug(f"lastmess == {lastmess}")
             else:
@@ -114,7 +115,8 @@ async def main():
                     if lastmess == 0:
                         logging.info("Тривога")
                         message = "🔴 Увага! Повітряна тривога! 🔴"
-                        await sendmess(message)
+                        photo = "alert.jpg"
+                        await sendmess(message, photo)
                         lastmess = 1
                         logging.debug(f"lastmess == {lastmess}")
 
