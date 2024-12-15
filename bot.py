@@ -16,7 +16,7 @@ lasteppo = 0
 
 bot = telegram.Bot(TGTOKEN)
 
-logging.basicConfig(level=logging.DEBUG, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
+logging.basicConfig(level=logging.INFO, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
 
 async def sendmess(message, photo):
     while True:
@@ -65,11 +65,14 @@ async def eppo():
                         messtime = int(datetime.strptime(messtime, "%Y-%m-%d %H:%M:%S").timestamp() * 1000)
 
                     if messtime > lasteppo:
-                        logging.info("Загроза наближається!")
+                        current_time = datetime.now()
+                        current_time_ms = int(current_time.timestamp() * 1000)
+                        if current_time_ms - messtime <= 5 * 60 * 1000:
+                            logging.info("Загроза наближається!")
 
-                        message = "❗️ Повітряна загроза рухається у нашому напрямку! ❗️"
-                        photo = "danger.jpeg"
-                        await sendmess(message, photo)
+                            message = "❗️ Повітряна загроза рухається у нашому напрямку! ❗️"
+                            photo = "danger.jpeg"
+                            await sendmess(message, photo)
                         
                         lasteppo = messtime
                         logging.debug(f"lasteppo == {lasteppo}")
