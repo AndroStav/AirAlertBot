@@ -9,13 +9,14 @@ logging.basicConfig(level=logging.INFO, filename="bot.log", filemode="w", format
 
 def load_config(filename):
     config = configparser.ConfigParser()
-    try:
-        config.read(filename)
-        logging.info("Конфігурація завантажена")
-        return config
-    except Exception as e:
-        logging.error(e)
+    config.read(filename)
+    
+    if not config.sections():
+        logging.error(f"Не вдалося завантажити конфігурацію з файлу: {filename}")
         return None
+    
+    logging.info("Конфігурація завантажена")
+    return config
 
 async def sendmess(message, photo):   
     while True:
