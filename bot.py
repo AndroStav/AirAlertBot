@@ -1,24 +1,23 @@
-import asyncio
-import math
+import asyncio, math, telegram, subprocess, json, logging, configparser
 from alerts_in_ua import AsyncClient as AsyncAlertsClient
-import telegram
-import subprocess
-import json
 from datetime import datetime
-import logging
 
-ALERTSTOKEN = "Alerts_in_ua_token"  #Токен alerts.in.ua api
-TGTOKEN = "Telegram_bot_token"      #Токен телеграм бота
-CHAT_ID = "Group_chat_id"           #ID групи
-THREAD_ID = "Group_thread_id"       #ID гілки в групі
 lastmess = 0
 lasteppo = 0
 
-bot = telegram.Bot(TGTOKEN)
-
 logging.basicConfig(level=logging.INFO, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
 
-async def sendmess(message, photo):
+def load_config(filename):
+    config = configparser.ConfigParser()
+    try:
+        config.read(filename)
+        logging.info("Конфігурація завантажена")
+        return config
+    except Exception as e:
+        logging.error(e)
+        return None
+
+async def sendmess(message, photo):   
     while True:
         try:
             await bot.send_photo(chat_id=CHAT_ID, message_thread_id=THREAD_ID, photo=photo, caption=message, read_timeout=60, write_timeout=60, connect_timeout=60)
@@ -75,6 +74,7 @@ async def eppo():
                             await sendmess(message, photo)
                         
                         lasteppo = messtime
+                        
                         logging.debug(f"lasteppo == {lasteppo}")
 
             logging.debug("Засинаю")
@@ -92,14 +92,29 @@ async def eppo():
 
 
 async def main():
+    config = load_config("config.ini")
+    if config is None:
+        return 1
+    
+    global CHAT_ID, THREAD_ID, lastmess, bot
+    
+    ALERTSTOKEN = config["General"]["ALERTSTOKEN"]
+    TGTOKEN = config["General"]["TGTOKEN"]
+    CHAT_ID = config["General"]["CHAT_ID"]
+    THREAD_ID = config["General"]["THREAD_ID"]
+        
+    use_eppo = config["Settings"]["use_eppo"]
+    city = config["Settings"]["city"]
+    
     alerts_client = AsyncAlertsClient(token=ALERTSTOKEN)
-    global lastmess
+    bot = telegram.Bot(TGTOKEN)
     logging.info("Бот запущено")
+    print("Бот запущено")
     
     while True:
         try:
             logging.debug("Надсилання запиту на alerts.in.ua")
-            alert_status = await alerts_client.get_air_raid_alert_status(31)
+            alert_status = await alerts_client.get_air_raid_alert_status(city)
             status_text = alert_status.status
             logging.debug(f"Отримано повідомлення: {status_text}")
 
@@ -120,9 +135,10 @@ async def main():
                         await sendmess(message, photo)
                         lastmess = 1
                         logging.debug(f"lastmess == {lastmess}")
-
-                        logging.info("Запуск єппо")
-                        asyncio.create_task(eppo())
+                        
+                        if use_eppo == "true":
+                            logging.info("Запуск єппо")
+                            asyncio.create_task(eppo())
 
             logging.debug("Засинаю")
             await asyncio.sleep(60)
@@ -139,10 +155,4 @@ async def main():
 
 
 if __name__ == "__main__":    
-    while True:
-        try:
-            asyncio.run(main())
-        except Exception as e:
-            logging.critical(e)
-            logging.debug("Засинаю після критичної помилки")
-            asyncio.sleep(15)
+    asyncio.run(main())
