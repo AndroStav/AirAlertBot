@@ -1,11 +1,12 @@
-import asyncio, math, telegram, subprocess, json, logging, configparser
+import asyncio, math, telegram, json, logging, configparser
 from alerts_in_ua import AsyncClient as AsyncAlertsClient
 from datetime import datetime
 
 lastmess = 0
 lasteppo = 0
 
-logging.basicConfig(level=logging.INFO, filename="bot.log", filemode="w", format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
+logging.basicConfig(level=logging.INFO, filename="bot.log", filemode="w", 
+                    format="%(asctime)s %(levelname)s [%(funcName)s]: %(message)s")
 
 def load_config(filename):
     config = configparser.ConfigParser()
@@ -21,7 +22,8 @@ def load_config(filename):
 async def sendmess(message, photo):   
     while True:
         try:
-            await bot.send_photo(chat_id=CHAT_ID, message_thread_id=THREAD_ID, photo=photo, caption=message, read_timeout=60, write_timeout=60, connect_timeout=60)
+            await bot.send_photo(chat_id=CHAT_ID, message_thread_id=THREAD_ID, photo=photo, caption=message, 
+                                 read_timeout=60, write_timeout=60, connect_timeout=60)
             logging.info("Повідомлення надіслано")
             return
         
@@ -54,8 +56,11 @@ async def eppo():
 
         try:
             logging.debug("Перевірка наявності сповіщення від єппо")
-            result = subprocess.run(['termux-notification-list'], capture_output=True, text=True)
-            notifications = json.loads(result.stdout)
+            proc = await asyncio.create_subprocess_exec(
+                'termux-notification-list',
+                stdout=asyncio.subprocess.PIPE)
+            stdout, stderr = await proc.communicate()
+            notifications = json.loads(stdout)
 
             for notification in notifications:
                 if target in notification['content']:
